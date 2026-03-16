@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEAM OMAR - VIP SYSTEM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #ffcc00; --blue: #00acee; --bg: #050505; --panel: #111; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 20px; line-height: 1.6; }
+        
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--gold); padding-bottom: 20px; }
+        .logo-text { font-size: 3rem; font-weight: 900; color: var(--gold); letter-spacing: 2px; text-shadow: 2px 2px 10px rgba(255,204,0,0.3); }
+        
+        .control-panel { background: var(--panel); padding: 25px; border-radius: 15px; border: 1px solid #222; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; }
+        
+        .field label { display: block; font-size: 0.8rem; color: #aaa; margin-bottom: 8px; font-weight: bold; }
+        .field input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; text-align: center; font-size: 1rem; transition: 0.3s; }
+        .field input:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 10px var(--blue); }
+        
+        .main-btn { grid-column: 1 / -1; padding: 18px; background: linear-gradient(45deg, var(--blue), #0072b1); color: #fff; font-weight: 900; border-radius: 8px; cursor: pointer; border: none; margin-top: 15px; font-size: 1.1rem; text-transform: uppercase; transition: 0.3s; }
+        .main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,172,238,0.4); }
+
+        .stats-row { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .stat-card { background: var(--panel); padding: 20px; border-radius: 12px; flex: 1; text-align: center; border-bottom: 4px solid var(--blue); min-width: 160px; transition: 0.3s; }
+        .stat-card h4 { font-size: 0.85rem; color: #888; margin: 0; text-transform: uppercase; }
+        .stat-card p { font-size: 1.4rem; font-weight: 900; color: var(--gold); margin: 10px 0 0 0; }
+
+        .table-wrapper { position: relative; background: var(--panel); border-radius: 15px; overflow: hidden; border: 1px solid #222; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+        .vip-table { width: 100%; border-collapse: collapse; position: relative; z-index: 1; }
+        .vip-table th { background: #1a1a1a; color: var(--gold); padding: 18px; font-size: 0.95rem; text-transform: uppercase; border-bottom: 2px solid #222; }
+        .vip-table td { padding: 15px; border-bottom: 1px solid #222; text-align: center; font-size: 0.9rem; font-weight: 500; }
+        .vip-table tr:nth-child(even) { background: #161616; }
+        .vip-table tr:hover { background: #1d1d1d; }
+
+        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-25deg); font-size: 10vw; font-weight: 900; color: rgba(255, 204, 0, 0.03); pointer-events: none; white-space: nowrap; z-index: 0; }
+        .day-label { background: #222 !important; color: var(--gold); font-weight: 900; font-size: 1.1rem !important; letter-spacing: 1px; }
+        .profit-up { color: #2ecc71; font-weight: bold; }
+
+        @media (max-width: 600px) { .input-grid { grid-template-columns: 1fr 1fr; } .logo-text { font-size: 2rem; } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-text">TEAM OMAR 👑</div>
+        <p style="color: #666; margin-top: 5px;">النظام الاحترافي المتطور لإدارة التداول وحساب الحجم</p>
+    </div>
+
+    <div class="control-panel">
+        <div class="input-grid">
+            <div class="field"><label>رأس المال ($)</label><input type="number" id="deposit" value="500"></div>
+            <div class="field"><label>المكافأة ($)</label><input type="number" id="bonus" value="20"></div>
+            <div class="field"><label>الدخول (%)</label><input type="number" id="risk" value="1" step="0.1"></div>
+            <div class="field"><label>أقل ربح (%)</label><input type="number" id="pMin" value="50"></div>
+            <div class="field"><label>أقصى ربح (%)</label><input type="number" id="pMax" value="55"></div>
+            <div class="field"><label>الحجم المطلوب</label><input type="number" id="vTarget" value="520"></div>
+            <div class="field"><label>إشارات أساسية</label><input type="number" id="baseSigs" value="3"></div>
+            <div class="field"><label>أيام الإضافي</label><input type="number" id="extraDays" value="2"></div>
+            <div class="field"><label>إشارات الإضافي</label><input type="number" id="extraSigs" value="1"></div>
+            <button class="main-btn" onclick="calculateSystem()">توليد الخطة الاستثمارية</button>
+        </div>
+    </div>
+
+    <div id="statsArea" class="stats-row"></div>
+
+    <div class="table-wrapper">
+        <div class="watermark">TEAM OMAR</div>
+        <table class="vip-table">
+            <thead>
+                <tr>
+                    <th>اليوم / الإشارة</th>
+                    <th>الرصيد قبل</th>
+                    <th>مبلغ الصفقة</th>
+                    <th>الربح المتوقع</th>
+                    <th>الرصيد النهائي</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function calculateSystem() {
+            const deposit = parseFloat(document.getElementById('deposit').value) || 0;
+            const bonus = parseFloat(document.getElementById('bonus').value) || 0;
+            const risk = (parseFloat(document.getElementById('risk').value) || 0) / 100;
+            const pMin = (parseFloat(document.getElementById('pMin').value) || 0) / 100;
+            const pMax = (parseFloat(document.getElementById('pMax').value) || 0) / 100;
+            const vTarget = parseFloat(document.getElementById('vTarget').value) || 0;
+            const baseSigs = parseInt(document.getElementById('baseSigs').value) || 0;
+            const extraDays = parseInt(document.getElementById('extraDays').value) || 0;
+            const extraSigs = parseInt(document.getElementById('extraSigs').value) || 0;
+
+            let balance = deposit + bonus;
+            let startBalance = balance;
+            let totalVolume = 0;
+            let day = 1;
+            let doubleDay = null;
+            
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            while (day <= 30) {
+                if (balance >= startBalance * 2 && doubleDay === null) doubleDay = day;
+
+                let dailySigsCount = baseSigs + (day <= extraDays ? extraSigs : 0);
+
+                const dayRow = document.createElement('tr');
+                dayRow.className = 'day-label';
+                dayRow.innerHTML = `<td colspan="5">📅 اليوم رقم ${day}</td>`;
+                tableBody.appendChild(dayRow);
+
+                for (let s = 1; s <= dailySigsCount; s++) {
+                    let before = balance;
+                    let tradeAmount = balance * risk;
+                    let profitPercent = Math.random() * (pMax - pMin) + pMin;
+                    let netProfit = tradeAmount * profitPercent;
+                    
+                    balance += netProfit;
+                    totalVolume += tradeAmount;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>إشارة ${s}</td>
+                        <td>$${before.toFixed(2)}</td>
+                        <td>$${tradeAmount.toFixed(2)}</td>
+                        <td class="profit-up">+$${netProfit.toFixed(2)}</td>
+                        <td>$${balance.toFixed(2)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                }
+                day++;
+            }
+
+            let remainingVol = Math.max(0, vTarget - totalVolume);
+            let avgDailyVol = (startBalance * risk) * baseSigs;
+            let daysToFinishVol = avgDailyVol > 0 ? Math.ceil(remainingVol / avgDailyVol) : 0;
+
+            document.getElementById('statsArea').innerHTML = `
+                <div class="stat-card"><h4>يوم المضاعفة</h4><p>${doubleDay ? 'يوم ' + doubleDay : 'قيد الحساب'}</p></div>
+                <div class="stat-card"><h4>إنهاء الحجم</h4><p>${daysToFinishVol > 0 ? 'خلال ' + daysToVol(totalVolume, vTarget, balance, risk, baseSigs) + ' أيام' : 'تم الإنجاز ✓'}</p></div>
+                <div class="stat-card"><h4>إجمالي الأرباح</h4><p>$${(balance - startBalance).toFixed(2)}</p></div>
+                <div class="stat-card"><h4>الرصيد النهائي</h4><p>$${balance.toFixed(2)}</p></div>
+            `;
+        }
+
+        function daysToVol(done, target, bal, risk, sigs) {
+            let remaining = target - done;
+            let perDay = (bal * risk) * sigs;
+            return Math.ceil(remaining / perDay);
+        }
+    </script>
+</body>
+</html>
